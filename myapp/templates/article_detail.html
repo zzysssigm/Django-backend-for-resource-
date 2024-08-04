@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article</title>
+</head>
+<body>
+    <h1>Article title:{{ article.article_title }}</h1>
+    <p>Article id:{{ article.id }}</p>
+    <p>Article author:{{ article.author.username}}</p>
+    <li>作者主页：<a href="{% url 'user_homepage' article.author.id %}">{{ article.author.username }}</a></li>
+    <p>{{ article.content }}</p>
+    <p>Tags: {{ article.tags }}</p>
+    <p>Published on: {{ article.publish_time }}</p>
+</body>
+</html>

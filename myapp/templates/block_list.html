@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Block List</title>
+</head>
+<body>
+    <h1>Blocked Users</h1>
+    <ul>
+        {% for user in blocked_users %}
+            <li>
+                {{ user.to_user.username }}
+                <a href="{% url 'unblock_user' user.to_user.id %}">Unblock</a>
+            </li>
+        {% endfor %}
+    </ul>
+    <button id="redirect_homepage">主页</button>
+    <script>
+        const button_homepage = document.getElementById('redirect_homepage');
+        button_homepage.addEventListener('click', function() {
+            window.location.href = 'http://127.0.0.1:8000/user/homepage/';
+        });
+    </script>
+</body>
+</html>

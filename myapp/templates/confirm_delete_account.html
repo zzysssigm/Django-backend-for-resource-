@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirm Delete Account</title>
+</head>
+<body>
+    <h1>Confirm Delete Account</h1>
+    <form method="post">
+        {% csrf_token %}
+        <label for="email_code">Email Code:</label>
+        <input type="text" id="email_code" name="email_code" required><br>
+        <button type="submit">Confirm Delete</button>
+    </form>
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+</body>
+</html>

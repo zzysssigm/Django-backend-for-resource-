@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Index for test</title>
+</head>
+<body>
+    <h1>测试页面</h1>
+    <h2>跳转到其他页面</h2>
+    <button id="redirect_register">没有账号?去注册</button>
+    <button id="redirect_email">用邮箱登陆</button>
+    <button id="redirect_passwd">用账号密码登陆</button>
+    <button id="redirect_reset">修改密码</button>
+    <button id="redirect_userlist">用户表单</button>
+    <button id="redirect_homepage">主页</button>
+    <script>
+        // 跳转
+        const button_register = document.getElementById('redirect_register');
+        const button_passwd = document.getElementById('redirect_passwd');
+        const button_email = document.getElementById('redirect_email');
+        const button_reset = document.getElementById('redirect_reset');
+        const button_userlist = document.getElementById('redirect_userlist');
+        const button_homepage = document.getElementById('redirect_homepage');
+
+        button_register.addEventListener('click', function() {
+            window.location.href = 'http://127.0.0.1:8000/user/register/';
+        });
+        button_passwd.addEventListener('click', function() {
+            window.location.href = 'http://127.0.0.1:8000/user/login_passwd/';
+        });
+        button_email.addEventListener('click', function() {
+            window.location.href = 'http://127.0.0.1:8000/user/login_email/';
+        });
+        button_reset.addEventListener('click', function() {
+            window.location.href = 'http://127.0.0.1:8000/user/reset_password/';
+        });
+        button_userlist.addEventListener('click', function() {
+            window.location.href = 'http://127.0.0.1:8000/user/userlist/';
+        });
+        button_homepage.addEventListener('click', function() {
+            window.location.href = 'http://127.0.0.1:8000/user/homepage/';
+        });
+    </script>
+    <h2>cookie检测-已废弃</h2>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ user.username }}'s Homepage</title>
+</head>
+<body>
+    <h1>Welcome to {{ user.username }}'s Homepage</h1>
+    <!-- <p>Email: {{ user.email }}</p> -->
+    <p>Reputation: {{ user.reputation }}</p>
+    <p>All Likes: {{ user.all_likes }}</p>
+    <p>All Views: {{ user.all_views }}</p>
+    <p>Influence: {{ user.influence }}</p>
+    <!-- 其他用户信息 -->
+    {% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <form method="post" action="{% url 'block_user' %}">
+        {% csrf_token %}
+        <input type="hidden" name="current_user_id" value="{{ user_me.id }}">
+        <input type="hidden" name="block_user_id" placeholder="User ID to block" value="{{ user.id }}">
+        <button type="submit">Block</button>
+    </form>
+    <button id="redirect_homepage">回到我的主页</button>
+    <script>
+        const button_homepage = document.getElementById('redirect_homepage');
+        button_homepage.addEventListener('click', function() {
+            window.location.href = 'http://127.0.0.1:8000/user/homepage/';
+        });
+    </script>
+    <h2>Articles</h2>
+    <ul>
+        {% for article in articles %}
+            <p>Article ID: {{ article.id }}</p>
+            <li><a href="{% url 'article_detail' article.id %}">{{ article.article_title }}</a> (Published on: {{ article.publish_time }})</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+</body>
+</html>

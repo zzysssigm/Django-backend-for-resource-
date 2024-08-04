@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+</head>
+<body>
+    <h1>Login</h1>
+    <form method="post">
+        {% csrf_token %}
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br>
+
+        <!-- 发送验证码 -->
+        <button type="button" id="send_code_btn">Send Code</button>
+        <br>
+
+        <label for="email_code">Email Code:</label>
+        <input type="text" id="email_code" name="email_code" required><br>
+        
+        <button type="submit">Login</button>
+    </form>
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+    <button id="redirect_register">没有账号?去注册</button>
+    <button id="redirect_passwd">用账号密码登陆</button>
+    <button id="redirect_reset">修改密码</button>
+    <script>
+        // 跳转
+        const button_register = document.getElementById('redirect_register');
+        const button_passwd = document.getElementById('redirect_passwd');
+        const button_reset = document.getElementById('redirect_reset');
+
+        button_register.addEventListener('click', function() {
+            window.location.href = 'http://127.0.0.1:8000/user/register/';
+        });
+        button_passwd.addEventListener('click', function() {
+            window.location.href = 'http://127.0.0.1:8000/user/login_passwd/';
+        });
+        button_reset.addEventListener('click', function() {
+            window.location.href = 'http://127.0.0.1:8000/user/reset_password/';
+        });
+    </script>
+    <script>
+        document.getElementById('send_code_btn').addEventListener('click', function() {
+            var email = document.getElementById('email').value;
+            if (email) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', '?send_code=1&email=' + encodeURIComponent(email), true);
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        alert('验证码已发送到您的邮箱');
+                    } else {
+                        alert('发送验证码失败，请重试');
+                    }
+                };
+                xhr.send();
+            } else {
+                alert('请先输入邮箱');
+            }
+        });
+        </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User List</title>
+</head>
+
+<body>
+    <h1>User List:</h1>
+    <table border="1">
+        <thead>
+            <th>id</th>
+            <th>username</th>
+            <th>password</th>
+            <th>email</th>
+            <!-- <th>email_code</th> -->
+            <th>reputation</th>
+            <th>influence</th>
+            <th>master</th>
+            <th>block</th>
+            <th>block_end_time</th>
+            <th>register_time</th>
+            <th>all_likes</th>
+            <th>all_views</th>
+        </thead>
+            {% for obj in data_list %}
+            <tr>
+                <td>{{obj.id}}</td>
+                <td>{{obj.username}}</td>
+                <td>{{obj.password}}</td>
+                <td>{{obj.email}}</td>
+                <!-- <td>{{obj.email_code}}</td> -->
+                <td>{{obj.reputation}}</td>
+                <td>{{obj.influence}}</td>
+                <td>{{obj.master}}</td>
+                <td>{{obj.block}}</td>
+                <td>{{obj.block_end_time}}</td>
+                <td>{{obj.register_time}}</td>
+                <td>{{obj.all_likes}}</td>
+                <td>{{obj.all_views}}</td>
+                <!-- <td>{{obj.cookie}}</td> -->
+            </tr>
+            {% endfor %}
+    </table>
+    <thead>
+        <h1>block_list</h1>
+        <tr>
+            <td>
+                <ul>
+                    {% for block in block_list %}
+                        <li>{{ block.from_user.username }} blocked {{ block.to_user.username }} (Blocked on: {{ block.created_at }})</li>
+                    {% empty %}
+                        <li>No users are blocked.</li>
+                    {% endfor %}
+                </ul>
+            </td>
+        </tr>
+    </thead>
+    
+</body>
+
+</html>
