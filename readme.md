@@ -1,22 +1,65 @@
 # 测试用文档
 
+使用Django自带的templates进行了前端功能的简单测试，以下页面和功能均已测试完成：
+
+index.html:测试使用的主页，集成了各个页面的跳转，方便测试，对应url为/user/index/；
+
+userlist.html：打印了所有用户的信息，包括id，用户名，密码，邮箱，拉黑关系等，对应url为/user/userlist/；
+
+register.html：为用户提供注册功能，需要输入用户名，密码，邮箱以及邮件验证码，对应url为/user/register/，目前使用个人邮箱发送验证码；
+
+login_email.html：为用户提供邮箱登录功能，需要输入用户名，邮箱以及邮件验证码，对应url为/user/login_email/，完成验证后验证码将会过期，以保证安全；
+
+login_passwd.html：为用户提供密码登录功能，需要输入用户名和密码，对应url为/user/login_passwd/；
+
+使用Django自带的会话功能（sessions），会话周期为两周，在这段时间里用户无需多次登录；在用户主页提供了登出功能，可以直接结束会话；
+
+homepage.html：用户的个人主页，需要登陆后(@login_required)才能访问，对应url为/user/homepage/；在用户主页可以看到用户的所有文章，除非被作者block；
+
+otherpage.html：其他用户的主页，需要登陆后才能访问，对应url为/user/homepage/<user.id>/；
+
+reset_password.html：提供了重置密码功能，用户需要输入用户名和邮箱进行校验，校验成功则向用户邮箱发送验证码，并进入confirm环节；
+
+reset_password_confirm.html：输入用户名，密码和邮箱验证码，通过校验后可以进行重置，对应url为/user/reset_password_confirm/；
+
+delete_account.html：提供了注销账户功能，用户需要输入用户名和邮箱进行校验，校验成功则向用户邮箱发送验证码，并进入confirm环节
+
+confirm_delete_account.html：输入邮箱验证码并确认，通过校验后可以进行重置，对应url为/user/delete_password_confirm/；
+
+create_article.html：用户可以创作并发表文章，目前还是纯文本，对应url为/user/create_article/；
+
+article_detail.html：用户可以通过自己或者他人的用户界面查看文章内容，对应url为/user/article/<article.id>/；
+
+block_list.html：查看用户黑名单，可以对黑名单中的用户进行解封操作（unblock），对应url为/user/blocklist；
+
 ## 已完成的功能：
 
-（1）基础用户功能：实现了 账密登陆/邮箱登陆/注册/重置密码/退出登陆/注销账户 等功能，地理位置检测还未上线；用户id还需完善（比如从10000000开始）；
+（1）基础用户功能：实现了 账密登陆/邮箱登陆/注册/重置密码/退出登陆/注销账户 等功能；
 
-（2）进阶用户功能：实现了 个人主页/黑名单/拉黑/解除拉黑 等功能，可以访问他人主页；主页可以看到用户发布的所有文章，被拉黑则不能；
+（2）进阶用户功能：实现了 个人主页/黑名单/拉黑/解除拉黑 等功能，可以访问他人主页；可以发布文章；主页可以看到用户发布的所有文章，被拉黑则不能；
 
-（3）
+（3）课程功能：开发中
 
 ## 接下来的任务：
 
 主页再多装饰一点东西，比如用户的posts；
 
-文章的图片显示功能，需要建个端口专门存图片，然后渲染时根据url渲染，注意检测过大的图片，不太了解这方面；
+验证码发送需要时间间隔（比如60s），待完善逻辑；
 
-最麻烦的通知功能/回复功能/发帖功能，慢慢琢磨吧，感觉好复杂啊
+用户id还需完善，目前是自增且从1开始（因为直接继承了抽象类所以还不知道应该怎么改）
 
-然后是最重要的course类，明天写吧，把这个写好基本成型了就
+地理位置检测功能还未上线，不过应该简单；
+
+文章展示/查看的时候需要检查是否被block；
+
+tags可以考虑使用#分隔，就不用单独存每个tag了；
+
+文章的图片显示功能，article需要专门存图片和位置，然后渲染时根据url渲染，注意检测过大的图片，不太会写这部分，能否考虑直接使用markdown
+转html？
+
+最麻烦的通知功能/回复功能/发帖功能，慢慢琢磨吧，感觉好复杂啊；
+
+比较重要的course类，把这个写好就基本成型了；
 
 ### 1.User类
 
@@ -48,9 +91,6 @@ blocklist = models.ManyToManyField('self', symmetrical=False,
 # 用户的发出的所有post
 
 # 用户的收到的所有reply（@信息和post下的评论都简化成reply）
-
-# 用户的所有article
-
 ```
 
 ### 2.Block_list类
@@ -79,7 +119,7 @@ blocklist = models.ManyToManyField('self', symmetrical=False,
 
 ```python
     # 文章的id
-    article_id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     # 文章标题
     article_title = models.CharField(max_length=255)
     # 作者（与User类关联）
@@ -98,7 +138,7 @@ blocklist = models.ManyToManyField('self', symmetrical=False,
 
     # 发表时间
     publish_time = models.DateTimeField(auto_now_add=True)
-    # 图片url等，没想好怎么处理
+    # 图片url等，存起来然后记录插入位置？暂时还没想好怎么处理
 
     def __str__(self):
         return self.article_title
@@ -115,7 +155,7 @@ blocklist = models.ManyToManyField('self', symmetrical=False,
 
 ### 
 
-### 其他指令：
+### 其他指令备忘录：
 
 #### （1）Django的迁移
 
@@ -142,3 +182,16 @@ sudo service mysql start
 mysql -u root -p[passwd]
 ```
 注意没有空格
+
+#### (5)临时开启代理
+
+```shell
+export http_proxy=http://127.0.0.1:7890
+export https_proxy=http://127.0.0.1:7890
+```
+git修改代理配置：
+
+```shell
+git config --global --get http.proxy
+git config --global --get https.proxy
+```
