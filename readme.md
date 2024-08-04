@@ -2,35 +2,35 @@
 
 使用Django自带的templates进行了前端功能的简单测试，以下页面和功能均已测试完成：
 
-index.html:测试使用的主页，集成了各个页面的跳转，方便测试，对应url为/user/index/；
+`index.html`:测试使用的主页，集成了各个页面的跳转，方便测试，对应url为/user/index/；
 
-userlist.html：打印了所有用户的信息，包括id，用户名，密码，邮箱，拉黑关系等，对应url为/user/userlist/；
+`userlist.html`：打印了所有用户的信息，包括id，用户名，密码，邮箱，拉黑关系等，对应url为/user/userlist/；
 
-register.html：为用户提供注册功能，需要输入用户名，密码，邮箱以及邮件验证码，对应url为/user/register/，目前使用个人邮箱发送验证码；
+`register.html`：为用户提供注册功能，需要输入用户名，密码，邮箱以及邮件验证码，对应url为/user/register/，目前使用个人邮箱发送验证码；
 
-login_email.html：为用户提供邮箱登录功能，需要输入用户名，邮箱以及邮件验证码，对应url为/user/login_email/，完成验证后验证码将会过期，以保证安全；
+`login_email.html`：为用户提供邮箱登录功能，需要输入用户名，邮箱以及邮件验证码，对应url为/user/login_email/，完成验证后验证码将会过期，以保证安全；
 
-login_passwd.html：为用户提供密码登录功能，需要输入用户名和密码，对应url为/user/login_passwd/；
+`login_passwd.html`：为用户提供密码登录功能，需要输入用户名和密码，对应url为/user/login_passwd/；
 
 使用Django自带的会话功能（sessions），会话周期为两周，在这段时间里用户无需多次登录；在用户主页提供了登出功能，可以直接结束会话；
 
-homepage.html：用户的个人主页，需要登陆后(@login_required)才能访问，对应url为/user/homepage/；在用户主页可以看到用户的所有文章，除非被作者block；
+`homepage.html`：用户的个人主页，需要登陆后(@login_required)才能访问，对应url为/user/homepage/；在用户主页可以看到用户的所有文章，除非被作者block；
 
-otherpage.html：其他用户的主页，需要登陆后才能访问，对应url为/user/homepage/<user.id>/；
+`otherpage.html`：其他用户的主页，需要登陆后才能访问，对应url为/user/homepage/<user.id>/；
 
-reset_password.html：提供了重置密码功能，用户需要输入用户名和邮箱进行校验，校验成功则向用户邮箱发送验证码，并进入confirm环节；
+`reset_password.html`：提供了重置密码功能，用户需要输入用户名和邮箱进行校验，校验成功则向用户邮箱发送验证码，并进入confirm环节；
 
-reset_password_confirm.html：输入用户名，密码和邮箱验证码，通过校验后可以进行重置，对应url为/user/reset_password_confirm/；
+`reset_password_confirm.html`：输入用户名，密码和邮箱验证码，通过校验后可以进行重置，对应url为/user/reset_password_confirm/；
 
-delete_account.html：提供了注销账户功能，用户需要输入用户名和邮箱进行校验，校验成功则向用户邮箱发送验证码，并进入confirm环节
+`delete_account.html`：提供了注销账户功能，用户需要输入用户名和邮箱进行校验，校验成功则向用户邮箱发送验证码，并进入confirm环节
 
-confirm_delete_account.html：输入邮箱验证码并确认，通过校验后可以进行重置，对应url为/user/delete_password_confirm/；
+`confirm_delete_account.html`：输入邮箱验证码并确认，通过校验后可以进行重置，对应url为/user/delete_password_confirm/；
 
-create_article.html：用户可以创作并发表文章，目前还是纯文本，对应url为/user/create_article/；
+`create_article.html`：用户可以创作并发表文章，目前还是纯文本，对应url为/user/create_article/；
 
-article_detail.html：用户可以通过自己或者他人的用户界面查看文章内容，对应url为/user/article/<article.id>/；
+`article_detail.html`：用户可以通过自己或者他人的用户界面查看文章内容，对应url为/user/article/<article.id>/；
 
-block_list.html：查看用户黑名单，可以对黑名单中的用户进行解封操作（unblock），对应url为/user/blocklist；
+`block_list.html`：查看用户黑名单，可以对黑名单中的用户进行解封操作（unblock），对应url为/user/blocklist；
 
 ## 已完成的功能：
 
