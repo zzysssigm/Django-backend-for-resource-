@@ -39,6 +39,13 @@ class Article(models.Model):
     def __str__(self):
         return self.article_title
 
+class Image(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='images/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s image {self.id}"
 
 class Test(models.Model):
     age=models.IntegerField(default=2)

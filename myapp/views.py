@@ -12,6 +12,16 @@ import random
 import string
 from django.core.mail import send_mail
 from django.conf import settings
+from rest_framework import viewsets, permissions
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Image
+from .serializers import ImageSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 # 生成四位验证码,仅包含大小写字母和数字
 def generate_email_code(length=4):
@@ -217,7 +227,7 @@ def index(request):
 def userlist(request):
     datalist=User.objects.all()
     blocklist = BlockList.objects.all()
-    articles = request.user.articles.all()
+    articles = Article.objects.all()
     return render(request,"userlist.html",{"data_list":datalist,"block_list": blocklist,"articles":articles})
 
 @login_required
@@ -301,6 +311,7 @@ def create_article(request):
         form = ArticleForm()
     return render(request, 'create_article.html', {'form': form})
 
+
 @login_required
 def article_detail(request, article_id):
     article = get_object_or_404(Article, id=article_id)
@@ -312,3 +323,28 @@ def article_detail(request, article_id):
     # print(article.id)
     # print(article.article_title)
     return render(request, 'article_detail.html', {'article': article})
+
+class IsOwner(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj.user == request.user
+
+class ImageViewSet(viewsets.ModelViewSet):
+    queryset = Image.objects.all()
+    serializer_class = ImageSerializer
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [permissions.IsAuthenticated, IsOwner]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class ImageUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+    # api:形如http://127.0.0.1:8000/media/images/C9STJRL5WPZTXLHY9V.jpg
+    def post(self, request, *args, **kwargs):
+        serializer = ImageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response({'image': serializer.data['image']}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

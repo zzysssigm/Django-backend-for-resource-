@@ -1,5 +1,10 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
+from .views import ImageViewSet, ImageUploadView
+
+router = DefaultRouter()
+router.register(r'images', ImageViewSet)
 
 urlpatterns = [
     path('index/', views.index, name='index'),
@@ -19,4 +24,6 @@ urlpatterns = [
     path('block_user/', views.block_user, name='block_user'),
     path('unblock/<int:user_id>/', views.unblock_user, name='unblock_user'),
     path('blocklist', views.blocklist, name='block_list'),
+    path('upload_image/', ImageUploadView.as_view(), name='upload_image'),
+    path('', include(router.urls)),
 ]

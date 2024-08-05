@@ -4,13 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Article</title>
+    <script src="https://cdn.jsdelivr.net/npm/showdown@1.9.1/dist/showdown.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const contentElement = document.getElementById('article-content');
+            const converter = new showdown.Converter({ 
+                simpleLineBreaks: true,
+                ghCodeBlocks: true,
+                ghCompatibleHeaderId: true
+            });
+            const html = converter.makeHtml(contentElement.innerHTML);
+            contentElement.innerHTML = html;
+        });
+    </script>
 </head>
 <body>
-    <h1>Article title:{{ article.article_title }}</h1>
-    <p>Article id:{{ article.id }}</p>
-    <p>Article author:{{ article.author.username}}</p>
+    <h1>Article title: {{ article.article_title }}</h1>
+    <p>Article id: {{ article.id }}</p>
+    <p>Article author: {{ article.author.username }}</p>
     <li>作者主页：<a href="{% url 'user_homepage' article.author.id %}">{{ article.author.username }}</a></li>
-    <p>{{ article.content }}</p>
+    <div id="article-content">{{ article.content|safe }}</div>
     <p>Tags: {{ article.tags }}</p>
     <p>Published on: {{ article.publish_time }}</p>
 </body>
