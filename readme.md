@@ -30,20 +30,29 @@
 
 `article_detail.html`：用户可以通过自己或者他人的用户界面查看文章内容，对应url为/user/article/<article.id>/；
 
-`block_list.html`：查看用户黑名单，可以对黑名单中的用户进行解封操作（unblock），对应url为/user/blocklist；
+图片api调用：正常进行文章编辑时，点击`插入图片`，即可将图片上传到服务器，并在光标处生成对应url，形如/media/images/example.jpg；
 
-图片api调用：正常进行文章编辑时，点击插入图片并上传到数据库，即可在光标处生成对应url，形如/media/images/example.jpg；
+`confirm_delete.html`：确认是否删除文章，对应url为/article/delete/<article.id>/；
+
+`edit_article.html`：提供修改文章的功能，对应url为/article/edit/<article.id>/；
+
+`block_list.html`：查看用户黑名单，可以对黑名单中的用户进行解封操作（unblock），对应url为/user/blocklist；
 
 ## 已完成的功能：
 
 （1）基础用户功能：实现了 账密登陆/邮箱登陆/注册/重置密码/退出登陆/注销账户 等功能；
 
-（2）进阶用户功能：实现了 个人主页/黑名单/拉黑/解除拉黑 等功能，可以访问他人主页；可以发布文章；主页可以看到用户发布的所有文章，被拉黑则不能；
+（2）进阶用户功能：实现了 个人主页/黑名单/拉黑/解除拉黑 等功能，可以访问他人主页；可以 发布/删除/修改 文章；
+
+主页可以看到用户发布的所有文章，被拉黑则不能；
+
 文章使用markdown渲染，插入图片会自动在光标处生成url；
 
 （3）课程功能：开发中
 
 ## 接下来的任务：
+
+明天做post和course；然后展示文章时候检测是否block；设置管理员权限；
 
 主页再多装饰一点东西，比如用户的posts；
 

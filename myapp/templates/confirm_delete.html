@@ -1,0 +1,10 @@
+{% block content %}
+  <h1>删除文章</h1>
+  <p>您确定要删除文章 "{{ article.article_title }}" 吗？</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">删除</button>
+    <a href="{% url 'user_homepage' user_id=request.user.id %}">取消</a>
+  </form>
+{% endblock %}

@@ -324,6 +324,32 @@ def article_detail(request, article_id):
     # print(article.article_title)
     return render(request, 'article_detail.html', {'article': article})
 
+@login_required
+def delete_article(request, article_id):
+    article = get_object_or_404(Article, id=article_id, author=request.user)
+    
+    if request.method == 'POST':
+        article.delete()
+        messages.success(request, '文章删除成功')
+        return redirect('user_homepage', user_id=request.user.id)
+    
+    return render(request, 'confirm_delete.html', {'article': article})
+
+@login_required
+def edit_article(request, article_id):
+    article = get_object_or_404(Article, id=article_id, author=request.user)
+    
+    if request.method == 'POST':
+        form = ArticleForm(request.POST, instance=article)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '文章修改成功')
+            return redirect('user_homepage', user_id=request.user.id)
+    else:
+        form = ArticleForm(instance=article)
+    
+    return render(request, 'edit_article.html', {'form': form, 'article': article})
+
 class IsOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.user == request.user

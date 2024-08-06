@@ -1,0 +1,96 @@
+<!-- {% block content %}
+  <h1>编辑文章</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">保存修改</button>
+  </form>
+{% endblock %} -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Article</title>
+    <script src="https://cdn.jsdelivr.net/npm/showdown@1.9.1/dist/showdown.min.js"></script>
+    <script>
+        function uploadImage() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = async () => {
+                const file = input.files[0];
+                const formData = new FormData();
+                formData.append('image', file);
+
+                const response = await fetch("{% url 'upload_image' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const imageUrl = data.image; // Assuming the response contains the URL
+
+                    const textarea = document.getElementById('id_content');
+                    const cursorPos = textarea.selectionStart;
+                    const textBefore = textarea.value.substring(0, cursorPos);
+                    const textAfter = textarea.value.substring(cursorPos, textarea.value.length);
+                    const markdownImage = `![alt text](${imageUrl})`;
+                    textarea.value = textBefore + markdownImage + textAfter;
+
+                    updatePreview(); // 更新预览
+                } else {
+                    alert('Image upload failed');
+                }
+            };
+            input.click();
+        }
+
+        function updatePreview() {
+            const content = document.getElementById('id_content').value;
+            const converter = new showdown.Converter();
+            const html = converter.makeHtml(content);
+            document.getElementById('markdown-preview').innerHTML = html;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('id_content').addEventListener('input', updatePreview);
+        });
+    </script>
+    <style>
+        .container {
+            display: flex;
+        }
+        .editor {
+            width: 50%;
+        }
+        .preview {
+            width: 50%;
+            padding: 10px;
+            border-left: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>发表文章</h1>
+    <div class="container">
+        <div class="editor">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="button" onclick="uploadImage()">上传图片</button>
+                <button type="submit">提交</button>
+            </form>
+        </div>
+        <div class="preview">
+            <h2>Markdown 预览</h2>
+            <div id="markdown-preview"></div>
+        </div>
+    </div>
+</body>
+</html>

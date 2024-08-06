@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Article</title>
+    <a href="{% url 'delete_article' article.id %}">删除文章</a>
+    <a href="{% url 'edit_article' article.id %}">修改文章</a>
     <script src="https://cdn.jsdelivr.net/npm/showdown@1.9.1/dist/showdown.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
