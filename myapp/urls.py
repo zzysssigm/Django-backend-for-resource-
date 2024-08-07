@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import ImageViewSet, ImageUploadView, PostCreateView, ReplyCreateView, ReplyToReplyView
+from .views import ImageViewSet, ImageUploadView, PostCreateView, ReplyCreateView, ReplyToReplyView, PostCreateCourse
 
 router = DefaultRouter()
 router.register(r'images', ImageViewSet)
@@ -30,6 +30,9 @@ urlpatterns = [
     path('block_user/', views.block_user, name='block_user'),
     path('unblock/<int:user_id>/', views.unblock_user, name='unblock_user'),
     path('blocklist', views.blocklist, name='block_list'),
+    path('courselist/', views.course_list, name='courselist'),
+    path('course/<int:course_id>/', views.course_detail, name='course_detail'),
+    path('course/<int:course_id>/post/', PostCreateCourse.as_view(), name='create_post_course'),
     path('upload_image/', ImageUploadView.as_view(), name='upload_image'),
     path('', include(router.urls)),
 ]

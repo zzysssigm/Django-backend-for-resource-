@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course</title>
+</head>
+<body>
+    <h1>Course name: {{ course.course_name }}</h1>
+    <p>Course id: {{ course.id }}</p>
+    <p>Course teacher: {{ course.course_teacher }}</p>
+    <p>Course type: {{ course.course_type }}</p>
+    <p>Course method: {{ course.course_method }}</p>
+    <p>Published on: {{ course.publish_time }}</p>
+    
+    <hr>
+    <a href="{% url 'create_post_course' course.id %}">Post：在此课程下发帖评论</a>
+    <h2>Posts</h2>
+    {% for post in posts %}
+    <div class="post">
+        <h3>{{ post.post_title }}</h3>
+        <p>Posted by: {{ post.poster.username }}</p>
+        <p>{{ post.content }}</p>
+        <p>Tags: {{ post.tags }}</p>
+        <p>Views: {{ post.views }}</p>
+        <p>Likes: {{ post.likes }}</p>
+        <p>Published on: {{ post.publish_time }}</p>
+
+        <!-- 回复帖子按钮 -->
+        <button onclick="document.getElementById('reply-form-{{ post.id }}').style.display='block'">回复帖子</button>
+        <div id="reply-form-{{ post.id }}" style="display:none;">
+            <form method="post" action="{% url 'create_reply' post.id %}">
+                {% csrf_token %}
+                <textarea name="reply_content" rows="3" placeholder="写下你的回复..."></textarea>
+                <button type="submit">提交</button>
+            </form>
+        </div>
+
+        <h4>Replies</h4>
+        
+        {% for reply in post.replies.all %}
+            <div class="reply">
+                <p>Replied by: {{ reply.replier.username }}</p>
+                <p>{{ reply.reply_content }}</p>
+                <p>Reply time: {{ reply.reply_time }}</p>
+                <!-- 回复评论按钮 -->
+                <button onclick="document.getElementById('reply-to-reply-form-{{ reply.id }}').style.display='block'">回复评论</button>
+                <div id="reply-to-reply-form-{{ reply.id }}" style="display:none;">
+                    <form method="post" action="{% url 'reply_to_reply' reply.id %}">
+                        {% csrf_token %}
+                        <textarea name="reply_content" rows="3" placeholder="写下你的回复..."></textarea>
+                        <button type="submit">提交</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <hr>
+{% endfor %}
+</body>
+</html>

@@ -91,6 +91,12 @@ class Post(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='posts', null=True, blank=True)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='posts', null=True, blank=True)
 
+    def send_notification(self, mentioned_user):
+        Notification.objects.create(
+            user=mentioned_user,
+            message=f"Your article have a new post, title:{self.post_title[:50]}, content:{self.content[:50]}"  # 通知消息可以包含帖子内容的前50个字符
+        )
+
     def __str__(self):
         return self.post_title
 
@@ -100,7 +106,7 @@ class Reply(models.Model):
     reply_time = models.DateTimeField(auto_now_add=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='replies')
     replier = models.ForeignKey(User, on_delete=models.CASCADE, related_name='replies')
-
+    
     def send_notification(self, mentioned_user):
         Notification.objects.create(
             user=mentioned_user,

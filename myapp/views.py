@@ -398,21 +398,40 @@ class ImageUploadView(APIView):
 class PostCreateView(CreateView):
     model = Post
     form_class = PostForm
-    template_name = 'create_post.html'  # 替换为你的模板名称
+    template_name = 'create_post.html'  
 
     def form_valid(self, form):
         article_id = self.kwargs['article_id']
-        print(article_id)
+        # print(article_id)
         article = get_object_or_404(Article, id=article_id)
         form.instance.article = article
         form.instance.poster = self.request.user
+        post = form.save()
+        mentioned_user=article.author
+        post.send_notification(mentioned_user)
         return super().form_valid(form)
 
     def get_success_url(self):
         article_id = self.kwargs['article_id']
-        print(article_id)
+        # print(article_id)
         return reverse('article_detail', kwargs={'article_id': article_id})
-        # return redirect(reverse('article_detail', args=[block_user_id]))
+
+class PostCreateCourse(CreateView):
+    model = Post
+    form_class = PostForm
+    template_name = 'create_post.html'  
+
+    def form_valid(self, form):
+        course_id = self.kwargs['course_id']
+        course = get_object_or_404(Course, id=course_id)
+        form.instance.course = course
+        form.instance.poster = self.request.user
+        post = form.save()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        course_id = self.kwargs['course_id']
+        return reverse('course_detail', kwargs={'course_id': course_id})
 
 class ReplyCreateView(CreateView):
     model = Reply
@@ -425,27 +444,31 @@ class ReplyCreateView(CreateView):
         form.instance.post = post
         form.instance.replier = self.request.user
         reply = form.save()
-
-        # 检查是否有提到的用户并发送通知
-        self.check_and_notify(reply)
+        mentioned_user = post.poster
+        reply.send_notification(mentioned_user)
+        #  这个不需要检查[@]
+        #  self.check_and_notify(reply)
 
         return super().form_valid(form)
 
     def get_success_url(self):
         post_id = self.kwargs['post_id']
         post = get_object_or_404(Post, id=post_id)
-        return reverse('article_detail', kwargs={'article_id': post.article.id})
+        if post.course:  # 检查 post 是否关联到 Course
+            return reverse('course_detail', kwargs={'course_id': post.course.id})
+        else:
+            return reverse('article_detail', kwargs={'article_id': post.article.id})
 
-    def check_and_notify(self, reply):
-        pattern = r'^\[@(\w+)\]'
-        match = re.match(pattern, reply.reply_content)
-        if match:
-            username = match.group(1)
-            try:
-                mentioned_user = User.objects.get(username=username)
-                reply.send_notification(mentioned_user)
-            except User.DoesNotExist:
-                pass
+    # def check_and_notify(self, reply):
+    #     pattern = r'^\[@(\w+)\]'
+    #     match = re.match(pattern, reply.reply_content)
+    #     if match:
+    #         username = match.group(1)
+    #         try:
+    #             mentioned_user = User.objects.get(username=username)
+    #             reply.send_notification(mentioned_user)
+    #         except User.DoesNotExist:
+    #             pass
 
 class ReplyToReplyView(CreateView):
     model = Reply
@@ -469,7 +492,11 @@ class ReplyToReplyView(CreateView):
     def get_success_url(self):
         parent_reply_id = self.kwargs['reply_id']
         parent_reply = get_object_or_404(Reply, id=parent_reply_id)
-        return reverse('article_detail', kwargs={'article_id': parent_reply.post.article.id})
+        post = parent_reply.post
+        if post.course:  # 检查 post 是否关联到 Course
+            return reverse('course_detail', kwargs={'course_id': post.course.id})
+        else:
+            return reverse('article_detail', kwargs={'article_id': post.article.id})
 
     def check_and_notify(self, reply):
         pattern = r'^\[@(\w+)\]'
@@ -488,3 +515,19 @@ def mark_as_read(request, notification_id):
     notification.read = True
     notification.save()
     return redirect('homepage')
+
+@login_required
+def course_list(request):
+    courses=Course.objects.all()
+    return render(request, 'course_list.html',{'courses':courses})
+
+@login_required
+def course_detail(request,course_id):
+    course = get_object_or_404(Course, id=course_id)
+    # 获取课程相关的帖子及其回复
+    posts = Post.objects.filter(course=course).prefetch_related('replies')
+    context = {
+        'course': course,
+        'posts': posts,
+    }
+    return render(request, 'course_detail.html', context)
