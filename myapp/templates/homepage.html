@@ -33,6 +33,17 @@
     </form>
     <a href="{% url 'block_list' %}">我的黑名单</a>
     <a href="{% url 'create_article' %}">发表文章</a>
+    <h2>Notifications</h2>
+    <ul>
+        {% for notification in notifications %}
+            <li {% if not notification.read %}class="unread"{% endif %}>
+                {{ notification.message }}
+                <a href="{% url 'mark_as_read' notification.id %}">Mark as read</a>
+            </li>
+        {% empty %}
+            <li>No notifications.</li>
+        {% endfor %}
+    </ul>
     <h2>我的Articles</h2>
     <ul>
         {% for article in articles %}

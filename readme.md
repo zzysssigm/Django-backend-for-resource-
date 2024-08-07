@@ -52,23 +52,21 @@
 
 ## 接下来的任务：
 
-明天做post和course；然后展示文章时候检测是否block；设置管理员权限；
+明天做post和course；然后展示文章时候检测是否block（这个其实交给前端就可以，展示的时候检查一下是否block）；
 
-主页再多装饰一点东西，比如用户的posts；
+设置管理员权限；
+
+主页再多装饰一点东西，比如用户的posts，以及通知；
 
 验证码发送需要时间间隔（比如60s），待完善逻辑；
 
-用户id还需完善，目前是自增且从1开始（因为直接继承了抽象类所以还不知道应该怎么改）
-
 地理位置检测功能还未上线，不过应该简单；
-
-文章展示/查看的时候需要检查是否被block；
 
 tags可以考虑使用#分隔，就不用单独存每个tag了；
 
 图片api调用时的鉴权，没想好怎么做；
 
-最麻烦的通知功能/回复功能/发帖功能，慢慢琢磨吧，感觉好复杂啊；
+最麻烦的通知功能/回复功能/发帖功能，慢慢琢磨吧，感觉好复杂啊，目前是打算：发replytoreply和post都会带一个[@{username}]，但post中的@不会渲染出来，reply中的会；
 
 比较重要的course类，把这个写好就基本成型了；
 
@@ -205,4 +203,16 @@ git修改代理配置：
 ```shell
 git config --global --get http.proxy
 git config --global --get https.proxy
+```
+
+#### mysqlclient安装失败
+
+见https://www.cnblogs.com/xingxia4/p/17832964.html；
+
+#### 设置自增id从某个数值开始（如1000000）
+
+可以迁移完成后手动在mysql中修改。
+
+```mysql
+ALTER TABLE myapp_user AUTO_INCREMENT = 1000000;
 ```

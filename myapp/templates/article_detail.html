@@ -1,3 +1,36 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article</title>
+    <a href="{% url 'delete_article' article.id %}">删除文章</a>
+    <a href="{% url 'edit_article' article.id %}">修改文章</a>
+    <script src="https://cdn.jsdelivr.net/npm/showdown@1.9.1/dist/showdown.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const contentElement = document.getElementById('article-content');
+            const converter = new showdown.Converter({ 
+                simpleLineBreaks: true,
+                ghCodeBlocks: true,
+                ghCompatibleHeaderId: true
+            });
+            const html = converter.makeHtml(contentElement.innerHTML);
+            contentElement.innerHTML = html;
+        });
+    </script>
+</head>
+<body>
+    <h1>Article title: {{ article.article_title }}</h1>
+    <p>Article id: {{ article.id }}</p>
+    <p>Article author: {{ article.author.username }}</p>
+    <li>作者主页：<a href="{% url 'user_homepage' article.author.id %}">{{ article.author.username }}</a></li>
+    <div id="article-content">{{ article.content|safe }}</div>
+    <p>Tags: {{ article.tags }}</p>
+    <p>Published on: {{ article.publish_time }}</p>
+
+</body>
+</html> -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,5 +61,52 @@
     <div id="article-content">{{ article.content|safe }}</div>
     <p>Tags: {{ article.tags }}</p>
     <p>Published on: {{ article.publish_time }}</p>
+    
+    <hr>
+    <a href="{% url 'create_post' article.id %}">Post：在文章下发帖</a>
+    <h2>Posts</h2>
+    {% for post in posts %}
+    <div class="post">
+        <h3>{{ post.post_title }}</h3>
+        <p>Posted by: {{ post.poster.username }}</p>
+        <p>{{ post.content }}</p>
+        <p>Tags: {{ post.tags }}</p>
+        <p>Views: {{ post.views }}</p>
+        <p>Likes: {{ post.likes }}</p>
+        <p>Published on: {{ post.publish_time }}</p>
+
+        <!-- 回复帖子按钮 -->
+        <button onclick="document.getElementById('reply-form-{{ post.id }}').style.display='block'">回复帖子</button>
+        <div id="reply-form-{{ post.id }}" style="display:none;">
+            <form method="post" action="{% url 'create_reply' post.id %}">
+                {% csrf_token %}
+                <textarea name="reply_content" rows="3" placeholder="写下你的回复..."></textarea>
+                <button type="submit">提交</button>
+            </form>
+        </div>
+
+        <h4>Replies</h4>
+        
+        {% for reply in post.replies.all %}
+            <div class="reply">
+                <p>Replied by: {{ reply.replier.username }}</p>
+                <p>{{ reply.reply_content }}</p>
+                <p>Reply time: {{ reply.reply_time }}</p>
+                <!-- 回复评论按钮 -->
+                <button onclick="document.getElementById('reply-to-reply-form-{{ reply.id }}').style.display='block'">回复评论</button>
+                <div id="reply-to-reply-form-{{ reply.id }}" style="display:none;">
+                    <form method="post" action="{% url 'reply_to_reply' reply.id %}">
+                        {% csrf_token %}
+                        <textarea name="reply_content" rows="3" placeholder="写下你的回复..."></textarea>
+                        <button type="submit">提交</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <hr>
+{% endfor %}
+
 </body>
 </html>
+

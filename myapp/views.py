@@ -6,10 +6,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth import login
 from django.contrib import messages
-from .models import User,BlockList,Article
-from .forms import ArticleForm
+from .models import User, BlockList, Article, Post, Course, Reply, Notification
+from .forms import ArticleForm, PostForm, ReplyForm
 import random
 import string
+import re
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework import viewsets, permissions
@@ -22,6 +23,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from django.views.generic.edit import CreateView
 
 # 生成四位验证码,仅包含大小写字母和数字
 def generate_email_code(length=4):
@@ -130,11 +132,12 @@ def homepage(request):
     blocklist = BlockList.objects.all()
     user = request.user
     articles = user.articles.all()
+    notifications = Notification.objects.filter(user=user, read=False)
     # 调试打印
     # for article in articles:
     #     print(f"Article ID: {article.id}, Title: {article.article_title}")
     # print(user.id)
-    return render(request, 'homepage.html', {'user': user,"block_list": blocklist, 'articles':articles })
+    return render(request, 'homepage.html', {'user': user,"block_list": blocklist, 'articles':articles, 'notifications': notifications })
 
 @login_required
 def delete_account(request):
@@ -312,22 +315,41 @@ def create_article(request):
     return render(request, 'create_article.html', {'form': form})
 
 
+# @login_required
+# def article_detail(request, article_id):
+#     article = get_object_or_404(Article, id=article_id)
+#     user_me = request.user
+#     user = article.author
+#     # 检查是否被作者拉黑
+#     if BlockList.objects.filter(from_user=user, to_user=user_me).exists():
+#         return render(request, 'user_be_blocked.html',{'user':user})
+#     # print(article.id)
+#     # print(article.article_title)
+#     return render(request, 'article_detail.html', {'article': article})
+
 @login_required
 def article_detail(request, article_id):
     article = get_object_or_404(Article, id=article_id)
     user_me = request.user
     user = article.author
+
     # 检查是否被作者拉黑
     if BlockList.objects.filter(from_user=user, to_user=user_me).exists():
-        return render(request, 'user_be_blocked.html',{'user':user})
-    # print(article.id)
-    # print(article.article_title)
-    return render(request, 'article_detail.html', {'article': article})
+        return render(request, 'user_be_blocked.html', {'user': user})
+
+    # 获取文章相关的帖子及其回复
+    posts = Post.objects.filter(article=article).prefetch_related('replies')
+
+    context = {
+        'article': article,
+        'posts': posts,
+    }
+
+    return render(request, 'article_detail.html', context)
 
 @login_required
 def delete_article(request, article_id):
     article = get_object_or_404(Article, id=article_id, author=request.user)
-    
     if request.method == 'POST':
         article.delete()
         messages.success(request, '文章删除成功')
@@ -338,7 +360,6 @@ def delete_article(request, article_id):
 @login_required
 def edit_article(request, article_id):
     article = get_object_or_404(Article, id=article_id, author=request.user)
-    
     if request.method == 'POST':
         form = ArticleForm(request.POST, instance=article)
         if form.is_valid():
@@ -374,3 +395,96 @@ class ImageUploadView(APIView):
             return Response({'image': serializer.data['image']}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class PostCreateView(CreateView):
+    model = Post
+    form_class = PostForm
+    template_name = 'create_post.html'  # 替换为你的模板名称
+
+    def form_valid(self, form):
+        article_id = self.kwargs['article_id']
+        print(article_id)
+        article = get_object_or_404(Article, id=article_id)
+        form.instance.article = article
+        form.instance.poster = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        article_id = self.kwargs['article_id']
+        print(article_id)
+        return reverse('article_detail', kwargs={'article_id': article_id})
+        # return redirect(reverse('article_detail', args=[block_user_id]))
+
+class ReplyCreateView(CreateView):
+    model = Reply
+    form_class = ReplyForm
+    template_name = 'reply_form.html'
+
+    def form_valid(self, form):
+        post_id = self.kwargs['post_id']
+        post = get_object_or_404(Post, id=post_id)
+        form.instance.post = post
+        form.instance.replier = self.request.user
+        reply = form.save()
+
+        # 检查是否有提到的用户并发送通知
+        self.check_and_notify(reply)
+
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        post_id = self.kwargs['post_id']
+        post = get_object_or_404(Post, id=post_id)
+        return reverse('article_detail', kwargs={'article_id': post.article.id})
+
+    def check_and_notify(self, reply):
+        pattern = r'^\[@(\w+)\]'
+        match = re.match(pattern, reply.reply_content)
+        if match:
+            username = match.group(1)
+            try:
+                mentioned_user = User.objects.get(username=username)
+                reply.send_notification(mentioned_user)
+            except User.DoesNotExist:
+                pass
+
+class ReplyToReplyView(CreateView):
+    model = Reply
+    form_class = ReplyForm
+    template_name = 'reply_form.html'
+
+    def form_valid(self, form):
+        parent_reply_id = self.kwargs['reply_id']
+        parent_reply = get_object_or_404(Reply, id=parent_reply_id)
+        post = parent_reply.post
+        form.instance.post = post
+        form.instance.replier = self.request.user
+        form.instance.reply_content = f"[@{parent_reply.replier.username}] {form.cleaned_data['reply_content']}"
+        reply = form.save()
+
+        # 检查是否有提到的用户并发送通知
+        self.check_and_notify(reply)
+
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        parent_reply_id = self.kwargs['reply_id']
+        parent_reply = get_object_or_404(Reply, id=parent_reply_id)
+        return reverse('article_detail', kwargs={'article_id': parent_reply.post.article.id})
+
+    def check_and_notify(self, reply):
+        pattern = r'^\[@(\w+)\]'
+        match = re.match(pattern, reply.reply_content)
+        if match:
+            username = match.group(1)
+            try:
+                mentioned_user = User.objects.get(username=username)
+                reply.send_notification(mentioned_user)
+            except User.DoesNotExist:
+                pass
+
+@login_required
+def mark_as_read(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.read = True
+    notification.save()
+    return redirect('homepage')

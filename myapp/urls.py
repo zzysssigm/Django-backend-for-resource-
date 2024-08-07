@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import ImageViewSet, ImageUploadView
+from .views import ImageViewSet, ImageUploadView, PostCreateView, ReplyCreateView, ReplyToReplyView
 
 router = DefaultRouter()
 router.register(r'images', ImageViewSet)
@@ -15,10 +15,14 @@ urlpatterns = [
     path('userlist/', views.userlist, name='userlist'),
     path('homepage/', views.homepage, name='homepage'),
     path('homepage/<int:user_id>/', views.user_homepage, name='user_homepage'),
+    path('notifications/<int:notification_id>/read/', views.mark_as_read, name='mark_as_read'),
     path('article/<int:article_id>/', views.article_detail, name='article_detail'),
     path('create_article/', views.create_article, name='create_article'),
     path('article/delete/<int:article_id>/', views.delete_article, name='delete_article'),
     path('article/edit/<int:article_id>/', views.edit_article, name='edit_article'),
+    path('article/<int:article_id>/post/', PostCreateView.as_view(), name='create_post'),
+    path('post/<int:post_id>/reply/', ReplyCreateView.as_view(), name='create_reply'),
+    path('reply/<int:reply_id>/reply/', ReplyToReplyView.as_view(), name='reply_to_reply'),
     path('delete_account/', views.delete_account, name='delete_account'),
     path('confirm_delete_account/', views.confirm_delete_account, name='confirm_delete_account'),
     path('reset_password/', views.reset_password, name='reset_password'),
