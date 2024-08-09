@@ -24,6 +24,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.views.generic.edit import CreateView
+from django.http import HttpResponseForbidden
 
 # 生成四位验证码,仅包含大小写字母和数字
 def generate_email_code(length=4):
@@ -315,6 +316,11 @@ def create_article(request):
     return render(request, 'create_article.html', {'form': form})
 
 
+@login_required
+def articlelist(request):
+    articles = Article.objects.all()
+    return render(request,"articlelist.html",{"articles": articles})
+
 # @login_required
 # def article_detail(request, article_id):
 #     article = get_object_or_404(Article, id=article_id)
@@ -433,6 +439,11 @@ class PostCreateCourse(CreateView):
         course_id = self.kwargs['course_id']
         return reverse('course_detail', kwargs={'course_id': course_id})
 
+@login_required
+def post_detail(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    return render(request, 'post_detail.html', {'post': post})
+
 class ReplyCreateView(CreateView):
     model = Reply
     form_class = ReplyForm
@@ -531,3 +542,82 @@ def course_detail(request,course_id):
         'posts': posts,
     }
     return render(request, 'course_detail.html', context)
+
+# 创建课程的视图函数
+@login_required
+def create_course(request):
+    if request.method == "POST":
+        course_name = request.POST.get("course_name")
+        course_type = request.POST.get("course_type")
+        college = request.POST.get("college")
+        credits = request.POST.get("credits")
+        course_teacher = request.POST.get("course_teacher")
+        course_method = request.POST.get("course_method")
+        assessment_method = request.POST.get("assessment_method")
+
+        # 创建课程对象
+        course = Course.objects.create(
+            course_name=course_name,
+            course_type=course_type,
+            college=college,
+            credits=credits,
+            course_teacher=course_teacher,
+            course_method=course_method,
+            assessment_method=assessment_method,
+        )
+        return redirect('course_detail', course_id=course.id)
+    else:
+        return render(request, 'create_course.html')
+
+# 删除课程的视图函数
+@login_required
+def delete_course(request, course_id):
+    user = request.user
+    # 只有管理员才可以删除课程
+    if(user.master == 0):
+        return HttpResponseForbidden("You are not authorized to delete this course.")
+    course = get_object_or_404(Course, id=course_id)
+    # 删除与课程关联的所有Post及其关联的Reply
+    posts = course.posts.all()
+    for post in posts:
+        post.replies.all().delete() 
+        post.delete() 
+    
+    course.delete()
+    
+    return redirect('courselist')  # 重定向到课程列表视图
+
+# 删除帖子
+@login_required
+def delete_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    user = request.user
+    # 权限检查：只有Post的作者或Article的作者才能删除该Post
+    if user.master == 0 and post.poster.id != user.id and (post.article is None or post.article.author.id != user.id):
+        return HttpResponseForbidden("You are not authorized to delete this post.")
+    # 删除与Post相关联的所有Reply
+    post.replies.all().delete()
+    # 检查 post 关联并删除
+    if post.course:  # 检查 post 是否关联课程
+        course_id = post.course.id
+        post.delete()
+        return redirect('course_detail', course_id=course_id)  
+    else:
+        article_id = post.article.id
+        post.delete()
+        return redirect('article_detail', article_id=article_id)  
+
+# 删除Reply的视图函数
+@login_required
+def delete_reply(request, reply_id):
+    reply = get_object_or_404(Reply, id=reply_id)
+    user = request.user
+    
+    # 权限检查：只有Reply的作者或关联Post的作者或Article的作者才能删除该Reply
+    if user.master == 0 and reply.replier.id != user.id and \
+       (reply.post.poster.id != user.id and (reply.post.article is None or reply.post.article.author.id != user.id)):
+        return HttpResponseForbidden("You are not authorized to delete this reply.")
+    
+    post = reply.post
+    reply.delete()
+    return redirect('post_detail',post_id=post.id)  

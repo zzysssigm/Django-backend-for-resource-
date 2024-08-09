@@ -3,20 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course</title>
+    <title>Document</title>
 </head>
 <body>
-    <h1>Course name: {{ course.course_name }}</h1>
-    <p>Course id: {{ course.id }}</p>
-    <p>Course teacher: {{ course.course_teacher }}</p>
-    <p>Course type: {{ course.course_type }}</p>
-    <p>Course method: {{ course.course_method }}</p>
-    <p>Published on: {{ course.publish_time }}</p>
-    <a href="{% url 'delete_course' course.id %}">删除该课程</a>
-    <hr>
-    <a href="{% url 'create_post_course' course.id %}">Post：在此课程下发帖评论</a>
-    <h2>Posts</h2>
-    {% for post in posts %}
+    <h1>Posts</h1>
     <div class="post">
         <h3>{{ post.post_title }}</h3>
         <p>Posted by: {{ post.poster.username }}</p>
@@ -25,7 +15,7 @@
         <p>Views: {{ post.views }}</p>
         <p>Likes: {{ post.likes }}</p>
         <p>Published on: {{ post.publish_time }}</p>
-        <a href="{% url 'post_detail' post.id %}">查看帖子详情</a>
+        <a href="{% url 'delete_post' post.id %}">删除帖子</a>
         <!-- 回复帖子按钮 -->
         <button onclick="document.getElementById('reply-form-{{ post.id }}').style.display='block'">回复帖子</button>
         <div id="reply-form-{{ post.id }}" style="display:none;">
@@ -36,13 +26,14 @@
             </form>
         </div>
 
-        <h4>Replies</h4>
+        <h3>Replies</h3>
         
         {% for reply in post.replies.all %}
             <div class="reply">
                 <p>Replied by: {{ reply.replier.username }}</p>
                 <p>{{ reply.reply_content }}</p>
                 <p>Reply time: {{ reply.reply_time }}</p>
+                <a href="{% url 'delete_reply' reply.id %}">删除评论</a>
                 <!-- 回复评论按钮 -->
                 <button onclick="document.getElementById('reply-to-reply-form-{{ reply.id }}').style.display='block'">回复评论</button>
                 <div id="reply-to-reply-form-{{ reply.id }}" style="display:none;">
@@ -56,6 +47,5 @@
         {% endfor %}
     </div>
     <hr>
-{% endfor %}
 </body>
 </html>

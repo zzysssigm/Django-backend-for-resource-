@@ -26,17 +26,30 @@
 
 `confirm_delete_account.html`：输入邮箱验证码并确认，通过校验后可以进行重置，对应url为/user/delete_password_confirm/；
 
-`create_article.html`：用户可以创作并发表文章，目前还是纯文本，对应url为/user/create_article/；
+`create_article.html`：用户可以创作并发表文章，采取markdown渲染预览，对应url为/user/create_article/；
 
-`article_detail.html`：用户可以通过自己或者他人的用户界面查看文章内容，对应url为/user/article/<article.id>/；
+`article_detail.html`：用户可以通过自己或者他人的用户界面查看文章内容，采用showdown库进行markdown渲染，对应url为/user/article/<article.id>/；
 
 图片api调用：正常进行文章编辑时，点击`插入图片`，即可将图片上传到服务器，并在光标处生成对应url，形如/media/images/example.jpg；
 
-`confirm_delete.html`：确认是否删除文章，对应url为/article/delete/<article.id>/；
+`confirm_delete.html`：确认是否删除文章，对应url为user/article/delete/<article.id>/；
 
-`edit_article.html`：提供修改文章的功能，对应url为/article/edit/<article.id>/；
+`edit_article.html`：提供修改文章的功能，对应url为user/article/edit/<article.id>/；
 
 `block_list.html`：查看用户黑名单，可以对黑名单中的用户进行解封操作（unblock），对应url为/user/blocklist；
+
+`create_post.html`：发帖功能，可以在文章/课程下发帖；post可以关联article或course，重定向时在视图函数中检查，对应url为
+
+`reply_form.html`：回复功能，用于回复post（reply to post），同时可以被回复（reply to reply）
+
+`course_list.html`：课程列表
+
+`course_detail.html`：课程详情
+
+`course_delete.html`
+
+考虑到安全性，建议设置管理员时直接在mysql中操作。
+
 
 ## 已完成的功能：
 
@@ -100,9 +113,6 @@ block_end_time = models.DateTimeField(null=True, blank=True)
 # 用户的黑名单
 blocklist = models.ManyToManyField('self', symmetrical=False, 
                                    related_name='blocked_by', through='BlockList')
-# 用户的发出的所有post
-
-# 用户的收到的所有reply（@信息和post下的评论都简化成reply）
 ```
 
 ### 2.Block_list类

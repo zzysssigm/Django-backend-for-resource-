@@ -50,5 +50,8 @@
             <li><a href="{% url 'article_detail' article.id %}">{{ article.article_title }}</a> (Published on: {{ article.publish_time }})</li>
         {% endfor %}
     </ul>
+    <li><a href="{% url 'create_course' %}">创建课程</a></li>
+    <li><a href="{% url 'courselist' %}">查看课程</a></li>
+    <li><a href="{% url 'articlelist' %}">查看文章</a></li>
 </body>
 </html>

@@ -74,7 +74,7 @@
         <p>Views: {{ post.views }}</p>
         <p>Likes: {{ post.likes }}</p>
         <p>Published on: {{ post.publish_time }}</p>
-
+        <a href="{% url 'post_detail' post.id %}">查看帖子详情</a>
         <!-- 回复帖子按钮 -->
         <button onclick="document.getElementById('reply-form-{{ post.id }}').style.display='block'">回复帖子</button>
         <div id="reply-form-{{ post.id }}" style="display:none;">
