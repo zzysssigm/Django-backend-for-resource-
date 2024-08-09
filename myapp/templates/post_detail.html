@@ -9,7 +9,7 @@
     <h1>Posts</h1>
     <div class="post">
         <h3>{{ post.post_title }}</h3>
-        <p>Posted by: {{ post.poster.username }}</p>
+        <p>Posted by: <a href="{% url 'user_homepage' post.poster.id %}">{{ post.poster.username }}</a></p>
         <p>{{ post.content }}</p>
         <p>Tags: {{ post.tags }}</p>
         <p>Views: {{ post.views }}</p>
@@ -30,7 +30,7 @@
         
         {% for reply in post.replies.all %}
             <div class="reply">
-                <p>Replied by: {{ reply.replier.username }}</p>
+                <p>Replied by: <a href="{% url 'user_homepage' reply.replier.id %}">{{ reply.replier.username }}</a></p>
                 <p>{{ reply.reply_content }}</p>
                 <p>Reply time: {{ reply.reply_time }}</p>
                 <a href="{% url 'delete_reply' reply.id %}">删除评论</a>

@@ -321,23 +321,14 @@ def articlelist(request):
     articles = Article.objects.all()
     return render(request,"articlelist.html",{"articles": articles})
 
-# @login_required
-# def article_detail(request, article_id):
-#     article = get_object_or_404(Article, id=article_id)
-#     user_me = request.user
-#     user = article.author
-#     # 检查是否被作者拉黑
-#     if BlockList.objects.filter(from_user=user, to_user=user_me).exists():
-#         return render(request, 'user_be_blocked.html',{'user':user})
-#     # print(article.id)
-#     # print(article.article_title)
-#     return render(request, 'article_detail.html', {'article': article})
-
 @login_required
 def article_detail(request, article_id):
     article = get_object_or_404(Article, id=article_id)
     user_me = request.user
     user = article.author
+
+    if article.block == 1:
+        return render(request, 'article_be_blocked.html')
 
     # 检查是否被作者拉黑
     if BlockList.objects.filter(from_user=user, to_user=user_me).exists():
@@ -404,22 +395,29 @@ class ImageUploadView(APIView):
 class PostCreateView(CreateView):
     model = Post
     form_class = PostForm
-    template_name = 'create_post.html'  
+    template_name = 'create_post.html'
 
     def form_valid(self, form):
         article_id = self.kwargs['article_id']
-        # print(article_id)
         article = get_object_or_404(Article, id=article_id)
+        user_me = self.request.user  # 当前用户
+        user = article.author  # 文章作者
+
+        # 检查当前用户是否被文章作者拉黑
+        if BlockList.objects.filter(from_user=user, to_user=user_me).exists():
+            return render(self.request, 'user_be_blocked.html', {'user': user})
+
+        # 如果没有被拉黑，继续保存表单
         form.instance.article = article
         form.instance.poster = self.request.user
         post = form.save()
-        mentioned_user=article.author
-        post.send_notification(mentioned_user)
+        mentioned_user = article.author
+        if user_me.id != mentioned_user.id:
+            post.send_notification(mentioned_user)
         return super().form_valid(form)
 
     def get_success_url(self):
         article_id = self.kwargs['article_id']
-        # print(article_id)
         return reverse('article_detail', kwargs={'article_id': article_id})
 
 class PostCreateCourse(CreateView):
@@ -452,34 +450,29 @@ class ReplyCreateView(CreateView):
     def form_valid(self, form):
         post_id = self.kwargs['post_id']
         post = get_object_or_404(Post, id=post_id)
+        user_me = self.request.user  # 当前用户
+        user = post.poster  # 帖子作者
+
+        # 检查当前用户是否被帖子作者或帖子关联文章的作者拉黑
+        if BlockList.objects.filter(from_user=user, to_user=user_me).exists() or \
+           (post.article and BlockList.objects.filter(from_user=post.article.author, to_user=user_me).exists()):
+            return render(self.request, 'user_be_blocked.html', {'user': user})
+
+        # 如果没有被拉黑，继续保存表单
         form.instance.post = post
         form.instance.replier = self.request.user
         reply = form.save()
         mentioned_user = post.poster
-        reply.send_notification(mentioned_user)
-        #  这个不需要检查[@]
-        #  self.check_and_notify(reply)
+        # 检查并通知
+        if mentioned_user.id != user_me.id:
+            reply.send_notification(mentioned_user)
 
         return super().form_valid(form)
 
     def get_success_url(self):
         post_id = self.kwargs['post_id']
         post = get_object_or_404(Post, id=post_id)
-        if post.course:  # 检查 post 是否关联到 Course
-            return reverse('course_detail', kwargs={'course_id': post.course.id})
-        else:
-            return reverse('article_detail', kwargs={'article_id': post.article.id})
-
-    # def check_and_notify(self, reply):
-    #     pattern = r'^\[@(\w+)\]'
-    #     match = re.match(pattern, reply.reply_content)
-    #     if match:
-    #         username = match.group(1)
-    #         try:
-    #             mentioned_user = User.objects.get(username=username)
-    #             reply.send_notification(mentioned_user)
-    #         except User.DoesNotExist:
-    #             pass
+        return reverse('post_detail', kwargs={'post_id': post.id})
 
 class ReplyToReplyView(CreateView):
     model = Reply
@@ -490,6 +483,15 @@ class ReplyToReplyView(CreateView):
         parent_reply_id = self.kwargs['reply_id']
         parent_reply = get_object_or_404(Reply, id=parent_reply_id)
         post = parent_reply.post
+        user_me = self.request.user  # 当前用户
+
+        # 检查当前用户是否被父回复的作者、帖子作者或文章作者拉黑
+        if BlockList.objects.filter(from_user=parent_reply.replier, to_user=user_me).exists() or \
+           BlockList.objects.filter(from_user=post.poster, to_user=user_me).exists() or \
+           (post.article and BlockList.objects.filter(from_user=post.article.author, to_user=user_me).exists()):
+            return render(self.request, 'user_be_blocked.html', {'user': parent_reply.replier})
+
+        # 如果没有被拉黑，继续保存表单
         form.instance.post = post
         form.instance.replier = self.request.user
         form.instance.reply_content = f"[@{parent_reply.replier.username}] {form.cleaned_data['reply_content']}"
@@ -504,10 +506,7 @@ class ReplyToReplyView(CreateView):
         parent_reply_id = self.kwargs['reply_id']
         parent_reply = get_object_or_404(Reply, id=parent_reply_id)
         post = parent_reply.post
-        if post.course:  # 检查 post 是否关联到 Course
-            return reverse('course_detail', kwargs={'course_id': post.course.id})
-        else:
-            return reverse('article_detail', kwargs={'article_id': post.article.id})
+        return reverse('post_detail', kwargs={'post_id': post.id})
 
     def check_and_notify(self, reply):
         pattern = r'^\[@(\w+)\]'
@@ -516,7 +515,8 @@ class ReplyToReplyView(CreateView):
             username = match.group(1)
             try:
                 mentioned_user = User.objects.get(username=username)
-                reply.send_notification(mentioned_user)
+                if mentioned_user.id != self.request.user.id:
+                    reply.send_notification(mentioned_user)
             except User.DoesNotExist:
                 pass
 
