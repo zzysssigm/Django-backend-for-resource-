@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth import login
 from django.contrib import messages
-from .models import User, BlockList, Article, Post, Course, Reply, Notification
+from .models import User, BlockList, Article, Post, Course, Reply, Notification, Like
 from .forms import ArticleForm, PostForm, ReplyForm
 import random
 import string
@@ -25,6 +25,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.views.generic.edit import CreateView
 from django.http import HttpResponseForbidden
+from django.db.models import F
+from django.contrib.contenttypes.models import ContentType
 
 # 生成四位验证码,仅包含大小写字母和数字
 def generate_email_code(length=4):
@@ -326,6 +328,7 @@ def article_detail(request, article_id):
     article = get_object_or_404(Article, id=article_id)
     user_me = request.user
     user = article.author
+    like_count = article.likes.count() 
 
     if article.block == 1:
         return render(request, 'article_be_blocked.html')
@@ -334,12 +337,21 @@ def article_detail(request, article_id):
     if BlockList.objects.filter(from_user=user, to_user=user_me).exists():
         return render(request, 'user_be_blocked.html', {'user': user})
 
+    # 浏览量
+    article.views = F('views') + 1
+    article.save(update_fields=['views'])
+    article.refresh_from_db()  # 刷新 article 对象
+
     # 获取文章相关的帖子及其回复
     posts = Post.objects.filter(article=article).prefetch_related('replies')
+
+    article_content_type = ContentType.objects.get_for_model(Article)
 
     context = {
         'article': article,
         'posts': posts,
+        'like_count': like_count,
+        'article_content_type': article_content_type,
     }
 
     return render(request, 'article_detail.html', context)
@@ -440,7 +452,22 @@ class PostCreateCourse(CreateView):
 @login_required
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    return render(request, 'post_detail.html', {'post': post})
+      # 浏览量
+    post.views = F('views') + 1
+    post.save(update_fields=['views'])
+    post.refresh_from_db()
+
+    post_like_count = post.likes.count() 
+    post_content_type = ContentType.objects.get_for_model(Post)
+    reply_content_type = ContentType.objects.get_for_model(Reply)
+
+    context = {
+        'post': post,
+        'post_like_count': post_like_count,
+        'post_content_type':post_content_type,
+        'reply_content_type':reply_content_type,
+    }
+    return render(request, 'post_detail.html', context)
 
 class ReplyCreateView(CreateView):
     model = Reply
@@ -537,9 +564,11 @@ def course_detail(request,course_id):
     course = get_object_or_404(Course, id=course_id)
     # 获取课程相关的帖子及其回复
     posts = Post.objects.filter(course=course).prefetch_related('replies')
+    course_content_type = ContentType.objects.get_for_model(Course)
     context = {
         'course': course,
         'posts': posts,
+        'course_content_type':course_content_type,
     }
     return render(request, 'course_detail.html', context)
 
@@ -621,3 +650,34 @@ def delete_reply(request, reply_id):
     post = reply.post
     reply.delete()
     return redirect('post_detail',post_id=post.id)  
+
+# 各种点赞
+@login_required
+def like_item(request, content_type_id, object_id):
+    content_type = get_object_or_404(ContentType, id=content_type_id)
+    model_class = content_type.model_class()
+    item = get_object_or_404(model_class, id=object_id)
+    user = request.user
+
+    # 检查用户是否已经点赞
+    existing_like = Like.objects.filter(user=user, content_type=content_type, object_id=object_id).first()
+
+    if existing_like:
+        # 如果已经点赞，执行取消点赞逻辑
+        existing_like.delete()
+    else:
+        # 添加点赞记录
+        Like.objects.create(user=user, content_object=item)
+
+    # 根据不同的模型类型进行重定向
+    if model_class == Article:
+        return redirect('article_detail', article_id=item.id)
+    elif model_class == Post:
+        return redirect('post_detail', post_id=item.id)
+    elif model_class == Reply:
+        return redirect('post_detail', post_id=item.post.id)
+    elif model_class == Course:
+        return redirect('course_detail', course_id=item.id)
+    
+    # 如果没有匹配到，则返回首页或者其他默认页面
+    return redirect('homepage')

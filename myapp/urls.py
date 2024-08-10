@@ -40,5 +40,6 @@ urlpatterns = [
     path('course/delete/<int:course_id>/', views.delete_course, name='delete_course'),
     path('course/<int:course_id>/post/', PostCreateCourse.as_view(), name='create_post_course'),
     path('upload_image/', ImageUploadView.as_view(), name='upload_image'),
+    path('like/<int:content_type_id>/<int:object_id>/', views.like_item, name='like_item'),
     path('', include(router.urls)),
 ]

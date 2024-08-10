@@ -1,6 +1,10 @@
 from django.db import models
 from django.core.validators import RegexValidator, MinLengthValidator, MaxLengthValidator
 from django.contrib.auth.models import AbstractUser
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericRelation
+
 
 # 继承AbstractUser,自带id,username和password
 class User(AbstractUser):
@@ -25,6 +29,16 @@ class BlockList(models.Model):
     class Meta:
         unique_together = ('from_user', 'to_user')
 
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'content_type', 'object_id')
+
 class Article(models.Model):
     id = models.AutoField(primary_key=True)
     article_title = models.CharField(max_length=255)
@@ -32,6 +46,8 @@ class Article(models.Model):
     content = models.TextField()
     tags = models.CharField(max_length=255)
     stars = models.IntegerField(default=0)
+    # likes = models.PositiveIntegerField(default=0)
+    likes = GenericRelation(Like)
     views = models.IntegerField(default=0)
     block = models.BooleanField(default=False)
     publish_time = models.DateTimeField(auto_now_add=True)
@@ -69,8 +85,9 @@ class Course(models.Model):
     course_teacher = models.CharField(max_length=255) # 课程老师
     course_method = models.CharField(max_length=50, choices=COURSE_METHOD_CHOICES) # 教学方式
     assessment_method = models.CharField(max_length=255) # 考核方式
-    likes = models.PositiveIntegerField(default=0) # 点赞数
-    # score = models.DecimalField(max_digits=3, decimal_places=2, default=0.00) 怎么感觉没啥用
+    # likes = models.PositiveIntegerField(default=0) # 点赞数
+    likes = GenericRelation(Like)
+    score = models.DecimalField(max_digits=3, decimal_places=2, default=0.00) # 评分
     relative_articles = models.ManyToManyField(Article, related_name='courses')
     publish_time = models.DateTimeField(auto_now_add=True)
 
@@ -84,7 +101,8 @@ class Post(models.Model):
     content = models.TextField()
     tags = models.CharField(max_length=255)
     views = models.IntegerField(default=0)
-    likes = models.IntegerField(default=0)
+    # likes = models.IntegerField(default=0)
+    likes = GenericRelation(Like)
     block = models.BooleanField(default=False)
     top = models.BooleanField(default=False)
     publish_time = models.DateTimeField(auto_now_add=True)
@@ -106,7 +124,9 @@ class Reply(models.Model):
     reply_time = models.DateTimeField(auto_now_add=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='replies')
     replier = models.ForeignKey(User, on_delete=models.CASCADE, related_name='replies')
-    
+    # likes = models.IntegerField(default=0)
+    likes = GenericRelation(Like)
+
     def send_notification(self, mentioned_user):
         Notification.objects.create(
             user=mentioned_user,

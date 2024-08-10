@@ -12,6 +12,8 @@
     <p>Course type: {{ course.course_type }}</p>
     <p>Course method: {{ course.course_method }}</p>
     <p>Published on: {{ course.publish_time }}</p>
+    <p>Likes: {{ course.likes.count }}</p>
+    <a href="{% url 'like_item' content_type_id=course_content_type.id object_id=course.id %}">Like</a>
     <a href="{% url 'delete_course' course.id %}">删除该课程</a>
     <hr>
     <a href="{% url 'create_post_course' course.id %}">Post：在此课程下发帖评论</a>
@@ -23,7 +25,7 @@
         <p>{{ post.content }}</p>
         <p>Tags: {{ post.tags }}</p>
         <p>Views: {{ post.views }}</p>
-        <p>Likes: {{ post.likes }}</p>
+        <p>Likes: {{ post.likes.count }}</p>
         <p>Published on: {{ post.publish_time }}</p>
         <a href="{% url 'post_detail' post.id %}">查看帖子详情</a>
         <!-- 回复帖子按钮 -->

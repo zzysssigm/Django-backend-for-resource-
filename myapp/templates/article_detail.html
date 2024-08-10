@@ -1,36 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Article</title>
-    <a href="{% url 'delete_article' article.id %}">删除文章</a>
-    <a href="{% url 'edit_article' article.id %}">修改文章</a>
-    <script src="https://cdn.jsdelivr.net/npm/showdown@1.9.1/dist/showdown.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const contentElement = document.getElementById('article-content');
-            const converter = new showdown.Converter({ 
-                simpleLineBreaks: true,
-                ghCodeBlocks: true,
-                ghCompatibleHeaderId: true
-            });
-            const html = converter.makeHtml(contentElement.innerHTML);
-            contentElement.innerHTML = html;
-        });
-    </script>
-</head>
-<body>
-    <h1>Article title: {{ article.article_title }}</h1>
-    <p>Article id: {{ article.id }}</p>
-    <p>Article author: {{ article.author.username }}</p>
-    <li>作者主页：<a href="{% url 'user_homepage' article.author.id %}">{{ article.author.username }}</a></li>
-    <div id="article-content">{{ article.content|safe }}</div>
-    <p>Tags: {{ article.tags }}</p>
-    <p>Published on: {{ article.publish_time }}</p>
-
-</body>
-</html> -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -59,6 +26,9 @@
     <p>Article author: {{ article.author.username }}</p>
     <li>作者主页：<a href="{% url 'user_homepage' article.author.id %}">{{ article.author.username }}</a></li>
     <div id="article-content">{{ article.content|safe }}</div>
+    <p>Views: {{ article.views }}</p>
+    <p>Likes: {{ like_count }}</p>
+    <a href="{% url 'like_item' content_type_id=article_content_type.id object_id=article.id %}">Like</a>
     <p>Tags: {{ article.tags }}</p>
     <p>Published on: {{ article.publish_time }}</p>
     
@@ -72,7 +42,7 @@
         <p>{{ post.content }}</p>
         <p>Tags: {{ post.tags }}</p>
         <p>Views: {{ post.views }}</p>
-        <p>Likes: {{ post.likes }}</p>
+        <p>Likes: {{ post.likes.count }}</p>
         <p>Published on: {{ post.publish_time }}</p>
         <a href="{% url 'post_detail' post.id %}">查看帖子详情</a>
         <!-- 回复帖子按钮 -->

@@ -13,8 +13,9 @@
         <p>{{ post.content }}</p>
         <p>Tags: {{ post.tags }}</p>
         <p>Views: {{ post.views }}</p>
-        <p>Likes: {{ post.likes }}</p>
+        <p>Likes: {{ post_like_count }}</p>
         <p>Published on: {{ post.publish_time }}</p>
+        <a href="{% url 'like_item' content_type_id=post_content_type.id object_id=post.id %}">Like</a>
         <a href="{% url 'delete_post' post.id %}">删除帖子</a>
         <!-- 回复帖子按钮 -->
         <button onclick="document.getElementById('reply-form-{{ post.id }}').style.display='block'">回复帖子</button>
@@ -32,7 +33,9 @@
             <div class="reply">
                 <p>Replied by: <a href="{% url 'user_homepage' reply.replier.id %}">{{ reply.replier.username }}</a></p>
                 <p>{{ reply.reply_content }}</p>
+                <p>Likes: {{ reply.likes.count }}</p>
                 <p>Reply time: {{ reply.reply_time }}</p>
+                <a href="{% url 'like_item' content_type_id=reply_content_type.id object_id=reply.id %}">Like</a>
                 <a href="{% url 'delete_reply' reply.id %}">删除评论</a>
                 <!-- 回复评论按钮 -->
                 <button onclick="document.getElementById('reply-to-reply-form-{{ reply.id }}').style.display='block'">回复评论</button>
