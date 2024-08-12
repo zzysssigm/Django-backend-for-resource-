@@ -85,14 +85,24 @@ class Course(models.Model):
     course_teacher = models.CharField(max_length=255) # 课程老师
     course_method = models.CharField(max_length=50, choices=COURSE_METHOD_CHOICES) # 教学方式
     assessment_method = models.CharField(max_length=255) # 考核方式
-    # likes = models.PositiveIntegerField(default=0) # 点赞数
     likes = GenericRelation(Like)
     score = models.DecimalField(max_digits=3, decimal_places=2, default=0.00) # 评分
+    all_score = models.DecimalField(max_digits=3, decimal_places=2, default=0.00) # 总评分
+    all_people = models.IntegerField(default=0) # 总评分人数
     relative_articles = models.ManyToManyField(Article, related_name='courses')
     publish_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.course_name
+
+class Score(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='scores')  # 使用 'scores' 作为反向查询名称
+    score = models.DecimalField(max_digits=3, decimal_places=2)
+
+    class Meta:
+        unique_together = ('user', 'course')
+
 
 class Post(models.Model):
     id = models.AutoField(primary_key=True)

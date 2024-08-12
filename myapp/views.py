@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth import login
 from django.contrib import messages
-from .models import User, BlockList, Article, Post, Course, Reply, Notification, Like
+from .models import User, BlockList, Article, Post, Course, Reply, Notification, Like, Score
 from .forms import ArticleForm, PostForm, ReplyForm
 import random
 import string
@@ -24,9 +24,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.views.generic.edit import CreateView
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponse
 from django.db.models import F
 from django.contrib.contenttypes.models import ContentType
+from decimal import Decimal, InvalidOperation
 
 # 生成四位验证码,仅包含大小写字母和数字
 def generate_email_code(length=4):
@@ -339,8 +340,10 @@ def article_detail(request, article_id):
 
     # 浏览量
     article.views = F('views') + 1
+    request.user.all_views = F('all_views') + 1
+    request.user.save(update_fields=['all_views'])
     article.save(update_fields=['views'])
-    article.refresh_from_db()  # 刷新 article 对象
+    article.refresh_from_db()  # 刷新 
 
     # 获取文章相关的帖子及其回复
     posts = Post.objects.filter(article=article).prefetch_related('replies')
@@ -454,6 +457,8 @@ def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
       # 浏览量
     post.views = F('views') + 1
+    request.user.all_views = F('all_views') + 1
+    request.user.save(update_fields=['all_views'])
     post.save(update_fields=['views'])
     post.refresh_from_db()
 
@@ -571,6 +576,44 @@ def course_detail(request,course_id):
         'course_content_type':course_content_type,
     }
     return render(request, 'course_detail.html', context)
+@login_required
+def rate_course(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    user_score = request.POST.get('score')
+    
+    if not user_score:
+        return HttpResponseForbidden("No score provided.")
+
+    try:
+        user_score = Decimal(user_score)
+    except InvalidOperation:
+        return HttpResponseForbidden("Invalid score value.")
+
+    # 检查用户是否已经对该课程评分
+    score_obj, created = Score.objects.get_or_create(
+        user=request.user,
+        course=course,
+        defaults={'score': Decimal('-1.00')}  # 确保创建时 `score` 字段有初始值，否则会Null报错；
+    )
+    # 注意F操作的顺序问题
+    if(score_obj.score != -1):
+        course.score = (F('all_score') - score_obj.score + user_score) / F('all_people')
+        course.all_score = F('all_score') - score_obj.score + user_score
+        course.save()
+    else:
+        course.score = (F('all_score') + user_score) / (F('all_people') + 1)
+        course.all_score = F('all_score') + user_score
+        course.all_people = F('all_people') + 1
+        course.save()
+
+    score_obj.score = user_score
+    score_obj.save()
+    # print(user_score)
+    # course.refresh_from_db()
+    # print(course.all_score)
+    # print(course.score)
+    # return HttpResponse(f'Rating submitted successfully, new score: {course.score}')
+    return redirect('course_detail', course_id=course.id)
 
 # 创建课程的视图函数
 @login_required
@@ -665,9 +708,13 @@ def like_item(request, content_type_id, object_id):
     if existing_like:
         # 如果已经点赞，执行取消点赞逻辑
         existing_like.delete()
+        request.user.all_likes = F('all_likes') - 1
+        request.user.save(update_fields=['all_likes'])
     else:
         # 添加点赞记录
         Like.objects.create(user=user, content_object=item)
+        request.user.all_likes = F('all_likes') + 1
+        request.user.save(update_fields=['all_likes'])
 
     # 根据不同的模型类型进行重定向
     if model_class == Article:
